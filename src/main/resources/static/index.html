@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Lottery System</title>
+    <style>
+            table {
+              font-family: arial, sans-serif;
+              border-collapse: collapse;
+              width: 100%;
+            }
+
+            td, th {
+              border: 1px solid #dddddd;
+              text-align: left;
+              padding: 8px;
+            }
+
+            tr:nth-child(even) {
+              background-color: #dddddd;
+            }
+            </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+
+    <script type="text/javascript">
+            let stompclient = null;
+
+            let idx = 0;
+            let accessToken = 'Bearer kajsfbkajbfkaj';
+
+
+            let prevSize = -1;
+            function connect(){
+                let socket  = new SockJS('http://localhost:8080/lottery/ws');
+                stompclient = Stomp.over(socket);
+
+                stompclient.connect({"X-Authorization": accessToken,
+                 "X-User":"Abhinav"}, function(frame){
+                    console.log('Connected: '+frame);
+                    stompclient.subscribe('/topic/congo', (data)=>{
+                        displayResult(JSON.parse(data.body));
+                    }, {"X-Authorization": accessToken,
+                 "X-User":"Abhinav"});
+                });
+            }
+
+            let v = 0;
+
+
+            function displayResult(data){
+
+                let table = document.getElementById("curr_table");
+                if(table.getElementsByTagName('tr').length>1){
+                    table.getElementsByTagName('tr')[1].remove();
+                }
+
+                let row = table.insertRow(1);
+
+                let data0 = row.insertCell(0);
+                let data1 = row.insertCell(1);
+                let data2 = row.insertCell(2);
+
+                let currWinner = null;
+                if(data.currentWinner!=null && data.currentWinner != undefined){
+                    currWinner = data.currentWinner;
+                }else{
+                    currWinner = data.announced[data.announced.length-1]
+                }
+                data0.innerHTML = currWinner.id;
+                data1.innerHTML = currWinner.bookingRef;
+                data2.innerHTML = currWinner.username;
+                v++;
+
+                if(data.announced.length!=0 && prevSize!=data.announced.length){
+
+                    prevSize = data.announced.length;
+
+                    let tableAnn = document.getElementById("ann_table");
+                    let rowA = tableAnn.insertRow(idx+1);
+                    let dataA0 = rowA.insertCell(0);
+                    let dataA1 = rowA.insertCell(1);
+                    let dataA2 = rowA.insertCell(2);
+
+                    dataA0.innerHTML = data.announced[idx].id;
+                    dataA1.innerHTML = data.announced[idx].bookingRef;
+                    dataA2.innerHTML = data.announced[idx].username;
+
+
+                    idx++;
+
+                }
+
+
+
+                // var announced = document.getElementById("announced");
+
+                // for(let anc of data.announced){
+                //     var pa = document.createElement('p');
+                //     pa.style.wordWrap = 'break-word';
+                //     pa.appendChild(document.createTextNode(JSON.stringify(anc)));
+                //     announced.appendChild(pa);
+                // }
+
+
+            }
+
+
+        </script>
+</head>
+<body onload="connect()">
+<div>
+    <br />
+    <div id="current_winner_response">
+        <label><h1>Current Winner</h1></label>
+        <table id="curr_table">
+            <thead>
+            <th>Id</th>
+            <th>Booking Reference No.</th>
+            <th>Username</th>
+            </thead>
+        </table>
+    </div>
+    <div>
+        <label><h1>Announced Winner</h1></label>
+        <table id="ann_table">
+            <thead>
+            <th>Id</th>
+            <th>Booking Reference No.</th>
+            <th>Username</th>
+            </thead>
+        </table>
+    </div>
+</div>
+
+
+</body>
+</html>
